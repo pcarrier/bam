@@ -22,12 +22,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.a.util
+package com.pcarrier.bam.util
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
-
-@Composable
-fun TextUnit.toDp(): Dp = with(LocalDensity.current) { toDp() }
+val DIFFERENT = object : Any() {
+    override fun equals(other: Any?) = false
+}

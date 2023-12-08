@@ -22,24 +22,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package com.pcarrier.bam
 
-package org.jraf.android.a.ui.shortcut
+import android.app.Application
 
-import android.content.pm.LauncherApps
-import android.os.Bundle
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import org.jraf.android.a.R
-import org.jraf.android.a.data.notifyShortcutsChanged
-
-class ShortcutAcceptActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val launcherApps = getSystemService(LauncherApps::class.java)
-        val pinItemRequest = launcherApps.getPinItemRequest(intent)
-        pinItemRequest.accept()
-        notifyShortcutsChanged()
-        Toast.makeText(this, getString(R.string.shortcutAccept_toast_accepted), Toast.LENGTH_SHORT).show()
-        finish()
+class BAMApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
     }
 }

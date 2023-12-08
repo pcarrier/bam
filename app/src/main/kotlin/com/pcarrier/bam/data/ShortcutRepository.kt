@@ -22,19 +22,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.a.data
+package com.pcarrier.bam.data
 
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.os.Process
+import com.pcarrier.bam.util.DIFFERENT
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.withContext
-import org.jraf.android.a.util.DIFFERENT
-import org.jraf.android.a.util.logw
 
 class ShortcutRepository(context: Context) {
     suspend fun observeShortcutsChanged(onShortcutsChanged: () -> Unit) {
@@ -76,11 +75,7 @@ class ShortcutRepository(context: Context) {
     }
 
     fun launchShortcut(shortcut: Shortcut) {
-        try {
-            launcherApps.startShortcut(shortcut.shortcutInfo, null, null)
-        } catch (e: Exception) {
-            logw(e, "Could not launch shortcut")
-        }
+        launcherApps.startShortcut(shortcut.shortcutInfo, null, null)
     }
 }
 

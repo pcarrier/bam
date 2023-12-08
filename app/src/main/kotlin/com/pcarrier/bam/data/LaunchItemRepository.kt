@@ -22,7 +22,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.a.data
+package com.pcarrier.bam.data
 
 import android.content.Context
 import com.squareup.sqldelight.android.AndroidSqliteDriver
@@ -33,7 +33,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.jraf.android.a.Database
+import com.pcarrier.bam.Database
 
 private const val LONG_TERM_HISTORY_SIZE = 300L
 private const val LONG_TERM_WEIGHT = 1L
@@ -48,7 +48,7 @@ class LaunchItemRepository(private val context: Context) {
         val driver = AndroidSqliteDriver(
             schema = Database.Schema,
             context = context,
-            name = "a.db",
+            name = "bam.db",
         )
         return Database(driver)
     }

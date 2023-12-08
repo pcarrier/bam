@@ -22,7 +22,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.a.ui.theme
+package com.pcarrier.bam.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme

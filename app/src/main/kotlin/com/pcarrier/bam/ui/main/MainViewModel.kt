@@ -22,17 +22,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package org.jraf.android.a.ui.main
+package com.pcarrier.bam.ui.main
 
 import android.app.Application
 import android.app.SearchManager
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.provider.ContactsContract
 import android.provider.Settings
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.pcarrier.bam.data.AppRepository
+import com.pcarrier.bam.data.LaunchItemRepository
+import com.pcarrier.bam.data.ShortcutRepository
+import com.pcarrier.bam.util.DIFFERENT
+import com.pcarrier.bam.util.containsIgnoreAccents
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -43,19 +47,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.jraf.android.a.data.AppRepository
-import org.jraf.android.a.data.ContactRepository
-import org.jraf.android.a.data.LaunchItemRepository
-import org.jraf.android.a.data.ShortcutRepository
-import org.jraf.android.a.util.DIFFERENT
-import org.jraf.android.a.util.containsIgnoreAccents
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var allLaunchItems: MutableStateFlow<List<LaunchItem>> = MutableStateFlow(emptyList())
 
     private val launchItemRepository = LaunchItemRepository(application)
     private val appRepository = AppRepository(application, onPackagesChanged = ::refreshAllLaunchItems)
-    private val contactRepository = ContactRepository(application)
     private val shortcutRepository = ShortcutRepository(application)
 
     private val counters: MutableStateFlow<Map<String, Long>> = MutableStateFlow(emptyMap())
@@ -107,8 +104,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val intentToStart = MutableSharedFlow<Intent>(extraBufferCapacity = 1)
     val scrollUp: MutableStateFlow<Any> = MutableStateFlow(DIFFERENT)
 
-    val shouldShowRequestPermissionRationale = MutableStateFlow(false)
-
     fun onSearchQueryChange(query: String) {
         searchQuery.value = query
         scrollUp.value = DIFFERENT
@@ -117,7 +112,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onLaunchItemPrimaryAction(launchedItem: LaunchItem) {
         when (launchedItem) {
             is AppLaunchItem -> intentToStart.tryEmit(launchedItem.launchAppIntent)
-            is ContactLaunchItem -> intentToStart.tryEmit(launchedItem.viewContactIntent)
             is ShortcutLaunchItem -> shortcutRepository.launchShortcut(launchedItem.shortcut)
         }
         viewModelScope.launch {
@@ -130,16 +124,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onLaunchItemSecondaryAction(launchedItem: LaunchItem) {
         when (launchedItem) {
             is AppLaunchItem -> intentToStart.tryEmit(launchedItem.launchAppDetailsIntent)
-            is ContactLaunchItem -> {
-                launchedItem.sendSmsIntent?.let { intentToStart.tryEmit(it) }
-
-                // Long clicking on a contact counts as a primary action
-                viewModelScope.launch {
-                    delay(1000)
-                    launchItemRepository.recordLaunchedItem(launchedItem.id)
-                }
-            }
-
             is ShortcutLaunchItem -> viewModelScope.launch { launchItemRepository.deleteItem(launchedItem.id) }
         }
     }
@@ -161,13 +145,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun getAllLaunchItems(): List<LaunchItem> {
         val allApps = appRepository.getAllApps()
         val allShortcuts = shortcutRepository.getAllShortcuts(allApps.map { it.packageName })
-        val starredContacts = contactRepository.getStarredContacts()
         return allApps.map { it.toAppLaunchItem() } +
-                allShortcuts.map { it.toShortcutLaunchItem() } +
-                starredContacts.map { it.toContactLaunchItem() }
+                allShortcuts.map { it.toShortcutLaunchItem() }
     }
 
-    fun refreshAllLaunchItems() {
+    private fun refreshAllLaunchItems() {
         viewModelScope.launch {
             allLaunchItems.value = getAllLaunchItems()
         }
@@ -230,42 +212,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             activityName = activityName,
             drawable = drawable,
             isDeprioritized = false,
-        )
-    }
-
-    data class ContactLaunchItem(
-        override val label: String,
-        private val contactId: Long,
-        private val lookupKey: String,
-        override val drawable: Drawable,
-        private val phoneNumber: String?,
-    ) : LaunchItem {
-        override val id = lookupKey
-
-        val viewContactIntent: Intent
-            get() = Intent(Intent.ACTION_VIEW)
-                .setData(ContactsContract.Contacts.getLookupUri(contactId, lookupKey))
-
-        val sendSmsIntent: Intent?
-            get() = phoneNumber?.let {
-                Intent(Intent.ACTION_SENDTO)
-                    .setData(Uri.parse("smsto:$it"))
-            }
-
-        override fun matchesFilter(query: String): Boolean {
-            return label.containsIgnoreAccents(query)
-        }
-
-        override val isDeprioritized: Boolean = false
-    }
-
-    private fun ContactRepository.Contact.toContactLaunchItem(): ContactLaunchItem {
-        return ContactLaunchItem(
-            label = displayName,
-            contactId = contactId,
-            lookupKey = lookupKey,
-            drawable = photoDrawable,
-            phoneNumber = phoneNumber,
         )
     }
 

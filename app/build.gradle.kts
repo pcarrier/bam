@@ -5,12 +5,12 @@ plugins {
 }
 
 android {
-    namespace = "org.jraf.android.a"
+    namespace = "com.pcarrier.bam"
 
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "a.a.a.a"
+        applicationId = "com.pcarrier.bam"
         minSdk = 26
         targetSdk = 34
         versionCode = 10

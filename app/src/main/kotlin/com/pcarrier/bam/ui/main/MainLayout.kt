@@ -25,14 +25,13 @@
 
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 
-package org.jraf.android.a.ui.main
+package com.pcarrier.bam.ui.main
 
 import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,13 +58,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -82,8 +79,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -100,9 +95,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
-import org.jraf.android.a.R
-import org.jraf.android.a.ui.theme.ATheme
-import org.jraf.android.a.util.toDp
+import com.pcarrier.bam.R
+import com.pcarrier.bam.ui.theme.ATheme
+import com.pcarrier.bam.util.toDp
 import kotlin.math.roundToInt
 import kotlin.random.Random
 
@@ -110,7 +105,6 @@ import kotlin.random.Random
 fun MainLayout(
     searchQuery: String,
     launchItems: List<MainViewModel.LaunchItem>,
-    shouldShowRequestPermissionRationale: Boolean,
     onSearchQueryChange: (String) -> Unit,
     onResetSearchQueryClick: () -> Unit,
     onWebSearchClick: () -> Unit,
@@ -119,7 +113,6 @@ fun MainLayout(
     onLaunchItemPrimaryAction: (MainViewModel.LaunchItem) -> Unit,
     onLaunchItemSecondaryAction: (MainViewModel.LaunchItem) -> Unit,
     onLaunchItemTertiaryAction: (MainViewModel.LaunchItem) -> Unit,
-    onRequestPermissionRationaleClick: () -> Unit,
     gridState: LazyGridState,
 ) {
     ATheme {
@@ -139,10 +132,6 @@ fun MainLayout(
                     onKeyboardActionButtonClick = onKeyboardActionButtonClick,
                     isKeyboardWebSearchActive = isKeyboardWebSearchActive,
                 )
-                if (shouldShowRequestPermissionRationale) {
-                    RequestPermissionRationale(onRequestPermissionRationaleClick = onRequestPermissionRationaleClick)
-                }
-
                 LaunchItemList(
                     launchItems = launchItems,
                     onLaunchItemPrimaryAction = onLaunchItemPrimaryAction,
@@ -152,29 +141,6 @@ fun MainLayout(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RequestPermissionRationale(onRequestPermissionRationaleClick: () -> Unit) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-    )
-    {
-        Text(
-            modifier = Modifier
-                .padding(8.sp.toDp())
-                .weight(1F),
-            text = stringResource(R.string.main_requestPermissionRationale_text),
-        )
-
-        Spacer(modifier = Modifier.size(8.sp.toDp()))
-
-        Button(onClick = onRequestPermissionRationaleClick) {
-            Text(text = stringResource(R.string.main_requestPermissionRationale_button))
-        }
-        Spacer(modifier = Modifier.size(8.sp.toDp()))
     }
 }
 
@@ -197,8 +163,7 @@ private fun SearchTextField(
     OutlinedTextField(
         modifier = Modifier
             .focusRequester(focusRequester)
-            .fillMaxWidth()
-            .padding(top = 8.sp.toDp(), start = 8.sp.toDp(), end = 8.sp.toDp()),
+            .fillMaxWidth(),
         value = searchQuery,
         singleLine = true,
         onValueChange = onSearchQueryChange,
@@ -227,7 +192,7 @@ private fun SearchTextField(
             }
         },
         keyboardOptions = KeyboardOptions(
-            keyboardType = KeyboardType.Password,
+            keyboardType = KeyboardType.Ascii,
             imeAction = if (isKeyboardWebSearchActive) ImeAction.Search else ImeAction.Go,
             autoCorrect = false,
         ),
@@ -264,21 +229,6 @@ private fun LaunchItemList(
                 )
             }
         }
-
-        // Fading edge
-        Spacer(
-            Modifier
-                .fillMaxWidth()
-                .height(12.sp.toDp())
-                .background(
-                    brush = Brush.verticalGradient(
-                        colors = listOf(
-                            MaterialTheme.colorScheme.surface.copy(alpha = .8f),
-                            Color.Transparent,
-                        )
-                    )
-                )
-        )
     }
 }
 
@@ -306,17 +256,7 @@ private fun LazyGridItemScope.LaunchItemItem(
             modifier = Modifier
                 .combinedClickable(
                     onClick = { onLaunchItemPrimaryAction(launchItem) },
-                    onLongClick = {
-                        when (launchItem) {
-                            is MainViewModel.AppLaunchItem, is MainViewModel.ShortcutLaunchItem -> {
-                                dropdownMenuVisible = true
-                            }
-
-                            is MainViewModel.ContactLaunchItem -> {
-                                onLaunchItemSecondaryAction(launchItem)
-                            }
-                        }
-                    }
+                    onLongClick = { dropdownMenuVisible = true }
                 )
                 .let {
                     if (launchItem.isDeprioritized) {
@@ -329,15 +269,7 @@ private fun LazyGridItemScope.LaunchItemItem(
         ) {
             Image(
                 modifier = Modifier
-                    .size(48.sp.toDp())
-                    .let {
-                        if (launchItem is MainViewModel.ContactLaunchItem) {
-                            // Contact photos are square, but we want circles
-                            it.clip(CircleShape)
-                        } else {
-                            it
-                        }
-                    },
+                    .size(48.sp.toDp()),
                 painter = DrawablePainter(launchItem.drawable),
                 contentDescription = launchItem.label,
                 colorFilter = if (launchItem.isDeprioritized) {
@@ -346,9 +278,7 @@ private fun LazyGridItemScope.LaunchItemItem(
                     null
                 },
             )
-            Spacer(modifier = Modifier.height(4.sp.toDp()))
             Text(
-                modifier = Modifier.padding(horizontal = 2.sp.toDp()),
                 text = launchItem.label,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -398,8 +328,6 @@ private fun LazyGridItemScope.LaunchItemItem(
                     )
                 }
             }
-
-            is MainViewModel.ContactLaunchItem -> {}
         }
     }
 }
@@ -420,7 +348,6 @@ private fun MainScreenPreview() {
             fakeApp(),
             fakeApp(),
         ),
-        shouldShowRequestPermissionRationale = false,
         onSearchQueryChange = {},
         onResetSearchQueryClick = {},
         onWebSearchClick = {},
@@ -429,7 +356,6 @@ private fun MainScreenPreview() {
         onLaunchItemPrimaryAction = {},
         onLaunchItemSecondaryAction = {},
         onLaunchItemTertiaryAction = {},
-        onRequestPermissionRationaleClick = {},
         gridState = rememberLazyGridState(),
     )
 }

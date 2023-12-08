@@ -1,7 +1,5 @@
-# a
+# bam
 
-A minimalist launcher for Android.
+Another minimalist launcher for Android.
 
-![Screenshot](assets/screenshot.png)
-
-It's named 'a' because it's the simplest name I could think of.
+Fork of BoD's [a](https://github.com/BoD/a) to suit my tastes.
